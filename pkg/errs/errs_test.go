@@ -15,6 +15,9 @@ func TestWrap(t *testing.T) {
 		require.Equal(t, baseErr, errs.Unwrap(wrapped))
 		require.Equal(t, true, errs.Is(wrapped, baseErr))
 	})
+	t.Run("nil error", func(t *testing.T) {
+		require.Nil(t, errs.Wrap(nil, "wrap"))
+	})
 }
 
 func TestWrapf(t *testing.T) {
@@ -34,5 +37,9 @@ func TestWrapf(t *testing.T) {
 		require.Equal(t, baseErr, errs.Unwrap(wrapped))
 		require.Equal(t, true, errs.Is(wrapped, baseErr))
 		require.Equal(t, "wrap with arg argName: base error", wrapped.Error())
+	})
+
+	t.Run("nil error", func(t *testing.T) {
+		require.Nil(t, errs.Wrapf(nil, "wrap"))
 	})
 }

@@ -35,6 +35,13 @@ func NoError(t *testing.T, err error) {
 	}
 }
 
+// Nil is a helper for ensuring that value is nil
+func Nil(t *testing.T, value any) {
+	if value != nil {
+		t.Fatalf("\nExpected nil, got: %v", value)
+	}
+}
+
 func logDiff[T comparable](t *testing.T, expected, got T) {
 	t.Logf("\nExpected: %v\nGot:      %v", expected, got)
 }

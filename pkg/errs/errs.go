@@ -21,12 +21,18 @@ func Newf(text string, args ...any) error {
 
 // Wrap is wraping provided error with prefix using fmt.Errorf and %w
 func Wrap(err error, prefix string) error {
+	if err == nil {
+		return nil
+	}
 	return fmt.Errorf(prefix+": %w", err)
 }
 
 // Wrapf is wraping provided error with prefix using fmt.Errorf and %w.
 // `prefix` will be expanded with provided args
 func Wrapf(err error, prefix string, args ...any) error {
+	if err == nil {
+		return nil
+	}
 	args = append(args, err)
 	return fmt.Errorf(prefix+": %w", args...)
 }
