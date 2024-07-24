@@ -5,7 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 
-	"github.com/pechorka/stdlib/pkg/errs"
+	"github.com/pechorka/gostdlib/pkg/errs"
 )
 
 type AesCryptor struct {

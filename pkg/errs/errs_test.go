@@ -3,8 +3,8 @@ package errs_test
 import (
 	"testing"
 
-	"github.com/pechorka/stdlib/pkg/errs"
-	"github.com/pechorka/stdlib/pkg/require"
+	"github.com/pechorka/gostdlib/pkg/errs"
+	"github.com/pechorka/gostdlib/pkg/require"
 )
 
 func TestWrap(t *testing.T) {

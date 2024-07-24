@@ -1,3 +1,3 @@
-module github.com/pechorka/stdlib
+module github.com/pechorka/gostdlib
 
 go 1.22.0
