@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/pechorka/gostdlib/pkg/errs"
-	"github.com/pechorka/gostdlib/pkg/require"
+	"github.com/pechorka/gostdlib/pkg/testing/require"
 )
 
 func TestWrap(t *testing.T) {

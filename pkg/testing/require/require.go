@@ -1,23 +1,25 @@
 package require
 
 import (
+	"reflect"
 	"testing"
+
+	"github.com/pechorka/gostdlib/pkg/testing/differ"
 )
 
 // Equal is a helper for comparing 2 variables in non deep-equal way
 func Equal[T comparable](t *testing.T, expect, got T) {
 	if expect != got {
-		logDiff(t, expect, got)
+		t.Log(differ.Diff(expect, got))
 		t.Fail()
 	}
 }
 
-// EqualWithMessage is a helper for comparing 2 variables in non deep-equal way.
-// Will print provided message
-func EqualWithMessage[T comparable](t *testing.T, expect, got T, msg string, args ...any) {
-	if expect != got {
-		logDiff(t, expect, got)
-		t.Fatalf(msg, args...)
+// DeepEqual compares two values using reflect.DeepEqual and shows detailed differences
+func DeepEqual(t *testing.T, expect, got interface{}) {
+	if !reflect.DeepEqual(expect, got) {
+		t.Log(differ.Diff(expect, got))
+		t.Fail()
 	}
 }
 
@@ -40,8 +42,4 @@ func Nil(t *testing.T, value any) {
 	if value != nil {
 		t.Fatalf("\nExpected nil, got: %v", value)
 	}
-}
-
-func logDiff[T comparable](t *testing.T, expected, got T) {
-	t.Logf("\nExpected: %v\nGot:      %v", expected, got)
 }
