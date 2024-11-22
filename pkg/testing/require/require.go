@@ -9,14 +9,16 @@ import (
 
 // Equal is a helper for comparing 2 variables in non deep-equal way
 func Equal[T comparable](t *testing.T, expect, got T) {
+	t.Helper()
 	if expect != got {
 		t.Log(differ.Diff(expect, got))
 		t.Fail()
 	}
 }
 
-// DeepEqual compares two values using reflect.DeepEqual and shows detailed differences
-func DeepEqual(t *testing.T, expect, got interface{}) {
+// EqualValues compares two values that can't be compared by == operator
+func EqualValues(t *testing.T, expect, got interface{}) {
+	t.Helper()
 	if !reflect.DeepEqual(expect, got) {
 		t.Log(differ.Diff(expect, got))
 		t.Fail()
@@ -25,6 +27,7 @@ func DeepEqual(t *testing.T, expect, got interface{}) {
 
 // Error is a helper for ensuring that error is not nil
 func Error(t *testing.T, err error) {
+	t.Helper()
 	if err == nil {
 		t.Fatal("\nExpected error")
 	}
@@ -32,6 +35,7 @@ func Error(t *testing.T, err error) {
 
 // NoError is a helper for ensuring that error is nil
 func NoError(t *testing.T, err error) {
+	t.Helper()
 	if err != nil {
 		t.Fatalf("\nExpected no error, got: %v", err)
 	}
@@ -39,7 +43,22 @@ func NoError(t *testing.T, err error) {
 
 // Nil is a helper for ensuring that value is nil
 func Nil(t *testing.T, value any) {
+	t.Helper()
 	if value != nil {
 		t.Fatalf("\nExpected nil, got: %v", value)
+	}
+}
+
+func True(t *testing.T, value bool) {
+	t.Helper()
+	if !value {
+		t.Fatal("\nExpected true, got false")
+	}
+}
+
+func False(t *testing.T, value bool) {
+	t.Helper()
+	if value {
+		t.Fatal("\nExpected false, got true")
 	}
 }
