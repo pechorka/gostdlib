@@ -62,3 +62,23 @@ func False(t *testing.T, value bool) {
 		t.Fatal("\nExpected false, got true")
 	}
 }
+
+func Panics(t *testing.T, f func()) {
+	t.Helper()
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatal("\nExpected panic, got no panic")
+		}
+	}()
+	f()
+}
+
+func NoPanics(t *testing.T, f func()) {
+	t.Helper()
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("\nExpected no panic, got panic: %v", r)
+		}
+	}()
+	f()
+}
