@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/pechorka/gostdlib/pkg/errs"
 	"github.com/pechorka/gostdlib/pkg/testing/differ"
 )
 
@@ -30,6 +31,13 @@ func Error(t *testing.T, err error) {
 	t.Helper()
 	if err == nil {
 		t.Fatal("\nExpected error")
+	}
+}
+
+func ErrorIs(t *testing.T, err, expected error) {
+	t.Helper()
+	if !errs.Is(err, expected) {
+		t.Fatalf("\nExpected error: %v, got: %v", expected, err)
 	}
 }
 
