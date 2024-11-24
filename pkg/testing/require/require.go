@@ -49,6 +49,14 @@ func Nil(t *testing.T, value any) {
 	}
 }
 
+// NotNil is a helper for ensuring that value is not nil
+func NotNil(t *testing.T, value any) {
+	t.Helper()
+	if value == nil {
+		t.Fatal("\nExpected not nil, got nil")
+	}
+}
+
 func True(t *testing.T, value bool) {
 	t.Helper()
 	if !value {
