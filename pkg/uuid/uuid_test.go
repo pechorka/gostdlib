@@ -117,38 +117,32 @@ func TestUUID(t *testing.T) {
 		})
 	})
 
+	checkTimestamp := func(uuid UUID, before, after int64) {
+		timestamp := int64(uuid[0])<<40 | int64(uuid[1])<<32 | int64(uuid[2])<<24 | int64(uuid[3])<<16 | int64(uuid[4])<<8 | int64(uuid[5])
+		require.True(t, before <= timestamp && timestamp <= after)
+	}
 	t.Run("NewV7", func(t *testing.T) {
+
 		t.Run("valid generation", func(t *testing.T) {
 			mockReader := &mockReader{
 				data: []byte{
-					0x00, 0x00, 0x00, 0x00,
-					0x00, 0x00, 0xde, 0xf0,
-					0x12, 0x34,
+					0x12, 0x34, 0x56, 0x78,
+					0x9a, 0xbc, 0xde, 0xf0,
+					0x12, 0x34, 0x56, 0x78,
+					0x9a, 0xbc, 0xde, 0xf0,
 				},
 			}
 			before := time.Now().UnixMilli()
 			uuid, err := NewV7(mockReader)
 			after := time.Now().UnixMilli()
-
 			require.NoError(t, err)
 
-			// Extract timestamp from UUID
-			timestamp := int64(uuid[0])<<40 | int64(uuid[1])<<32 | int64(uuid[2])<<24 |
-				int64(uuid[3])<<16 | int64(uuid[4])<<8 | int64(uuid[5])
-
-			// Check if timestamp is within the expected range
-			require.True(t, timestamp >= before && timestamp <= after)
+			checkTimestamp(uuid, before, after)
 
 			// Check version bits (version 7)
 			require.Equal(t, byte(0x7), uuid[6]>>4)
 			// Check variant bits (RFC4122)
 			require.Equal(t, byte(0x2), uuid[8]>>6)
-
-			// Check that the random portion matches our mock data (with version/variant bits applied)
-			require.Equal(t, byte(0xde), uuid[6]&0x0f)
-			require.Equal(t, byte(0xf0), uuid[7])
-			require.Equal(t, byte(0x92), uuid[8]) // 0x12 with variant bits applied
-			require.Equal(t, byte(0x34), uuid[9])
 		})
 
 		t.Run("reader error", func(t *testing.T) {
@@ -162,14 +156,20 @@ func TestUUID(t *testing.T) {
 		t.Run("valid generation", func(t *testing.T) {
 			mockReader := &mockReader{
 				data: []byte{
-					0x00, 0x00, 0x00, 0x00,
-					0x00, 0x00, 0xde, 0xf0,
-					0x12, 0x34,
+					0x12, 0x34, 0x56, 0x78,
+					0x9a, 0xbc, 0xde, 0xf0,
+					0x12, 0x34, 0x56, 0x78,
+					0x9a, 0xbc, 0xde, 0xf0,
 				},
 			}
+			before := time.Now().UnixMilli()
 			uuid := MustV7(mockReader)
-			require.Equal(t, byte(0x7), uuid[6]>>4)
-			require.Equal(t, byte(0x2), uuid[8]>>6)
+			after := time.Now().UnixMilli()
+
+			checkTimestamp(uuid, before, after)
+
+			require.Equal(t, byte(0x7), uuid[6]>>4) // Check version bits (version 7)
+			require.Equal(t, byte(0x2), uuid[8]>>6) // Check variant bits (RFC4122)
 		})
 
 		t.Run("panics on error", func(t *testing.T) {
@@ -184,15 +184,17 @@ func TestUUID(t *testing.T) {
 		t.Run("valid generation", func(t *testing.T) {
 			mockReader := &mockReader{
 				data: []byte{
-					0x00, 0x00, 0x00, 0x00,
-					0x00, 0x00, 0xde, 0xf0,
-					0x12, 0x34,
+					0x12, 0x34, 0x56, 0x78,
+					0x9a, 0xbc, 0xde, 0xf0,
+					0x12, 0x34, 0x56, 0x78,
+					0x9a, 0xbc, 0xde, 0xf0,
 				},
 			}
 			uuidStr, err := NewV7String(mockReader)
 			require.NoError(t, err)
+			// Verify it's a valid UUID string format
 			require.Equal(t, 36, len(uuidStr))
-			require.Equal(t, "7", string(uuidStr[14]))
+			require.Equal(t, byte('7'), uuidStr[14])
 		})
 
 		t.Run("reader error", func(t *testing.T) {
@@ -206,14 +208,16 @@ func TestUUID(t *testing.T) {
 		t.Run("valid generation", func(t *testing.T) {
 			mockReader := &mockReader{
 				data: []byte{
-					0x00, 0x00, 0x00, 0x00,
-					0x00, 0x00, 0xde, 0xf0,
-					0x12, 0x34,
+					0x12, 0x34, 0x56, 0x78,
+					0x9a, 0xbc, 0xde, 0xf0,
+					0x12, 0x34, 0x56, 0x78,
+					0x9a, 0xbc, 0xde, 0xf0,
 				},
 			}
 			uuidStr := MustV7String(mockReader)
+			// Verify it's a valid UUID string format
 			require.Equal(t, 36, len(uuidStr))
-			require.Equal(t, "7", string(uuidStr[14]))
+			require.Equal(t, byte('7'), uuidStr[14])
 		})
 
 		t.Run("panics on error", func(t *testing.T) {

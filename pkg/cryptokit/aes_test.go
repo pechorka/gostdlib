@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/pechorka/gostdlib/pkg/require"
+	"github.com/pechorka/gostdlib/pkg/testing/require"
 )
 
 func TestAesEncrypter_Encrypt(t *testing.T) {

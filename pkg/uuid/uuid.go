@@ -2,7 +2,6 @@ package uuid
 
 import (
 	"encoding/hex"
-	"fmt"
 	"io"
 	"time"
 
@@ -67,29 +66,11 @@ func MustV4String(r io.Reader) string {
 
 // NewV7 generates a new UUID v7 (time-ordered) using the provided reader
 func NewV7(r io.Reader) (UUID, error) {
-	var uuid UUID
-
-	now := time.Now().UnixMilli()
-
-	// Set timestamp (first 48 bits)
-	uuid[0] = byte(now >> 40)
-	uuid[1] = byte(now >> 32)
-	uuid[2] = byte(now >> 24)
-	uuid[3] = byte(now >> 16)
-	uuid[4] = byte(now >> 8)
-	uuid[5] = byte(now)
-
-	_, err := r.Read(uuid[6:])
+	uuid, err := NewV4(r)
 	if err != nil {
-		return UUID{}, fmt.Errorf("failed to generate UUID v7: %w", err)
+		return UUID{}, err
 	}
-
-	// Set version 7
-	uuid[6] = (uuid[6] & 0x0f) | 0x70
-	// Set variant to RFC4122
-	uuid[8] = (uuid[8] & 0x3f) | 0x80
-
-	return uuid, nil
+	return toV7(uuid), nil
 }
 
 func MustV7(r io.Reader) UUID {
@@ -110,4 +91,21 @@ func NewV7String(r io.Reader) (string, error) {
 
 func MustV7String(r io.Reader) string {
 	return MustV7(r).String()
+}
+
+func toV7(uuid UUID) UUID {
+	now := time.Now().UnixMilli()
+
+	// Set timestamp (first 48 bits)
+	uuid[0] = byte(now >> 40)
+	uuid[1] = byte(now >> 32)
+	uuid[2] = byte(now >> 24)
+	uuid[3] = byte(now >> 16)
+	uuid[4] = byte(now >> 8)
+	uuid[5] = byte(now)
+
+	uuid[6] = (uuid[6] & 0x0f) | 0x70 // Set version 7
+	uuid[8] = (uuid[8] & 0x3f) | 0x80 // Set variant to RFC4122
+
+	return uuid
 }
