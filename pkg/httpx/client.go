@@ -1,6 +1,7 @@
 package httpx
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -91,6 +92,38 @@ func getJSON[Resp any](ctx context.Context, client *Client, url string) (resp Re
 	if err != nil {
 		return resp, errs.Wrap(err, "failed to do request")
 	}
+
+	return parseAndCloseResponse[Resp](httpResp)
+}
+
+func PostJSON[Resp any](ctx context.Context, url string, body any) (resp Resp, err error) {
+	return postJSON[Resp](ctx, defaultClient, url, body)
+}
+
+func PostJSONWithClient[Resp any](ctx context.Context, client *Client, url string, body any) (resp Resp, err error) {
+	return postJSON[Resp](ctx, client, url, body)
+}
+
+func postJSON[Resp any](ctx context.Context, client *Client, url string, body any) (resp Resp, _ error) {
+	encodedBody, err := json.Marshal(body)
+	if err != nil {
+		return resp, errs.Wrap(err, "failed to encode request body")
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(encodedBody))
+	if err != nil {
+		return resp, errs.Wrap(err, "failed to create request")
+	}
+
+	httpResp, err := client.Do(req)
+	if err != nil {
+		return resp, errs.Wrap(err, "failed to do request")
+	}
+
+	return parseAndCloseResponse[Resp](httpResp)
+}
+
+func parseAndCloseResponse[Resp any](httpResp *http.Response) (resp Resp, err error) {
 	if httpResp.StatusCode >= 400 {
 		body, err := io.ReadAll(httpResp.Body)
 		if err != nil {

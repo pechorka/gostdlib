@@ -76,3 +76,76 @@ func TestGetJSON(t *testing.T) {
 		require.ErrorIs(t, err, context.Canceled)
 	})
 }
+
+func TestPostJSON(t *testing.T) {
+	t.Run("successful request", func(t *testing.T) {
+		expected := testResponse{
+			Message: "success",
+			Code:    200,
+		}
+		requestBody := struct {
+			Data string `json:"data"`
+		}{
+			Data: "test data",
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, http.MethodPost, r.Method)
+
+			var received struct {
+				Data string `json:"data"`
+			}
+			err := json.NewDecoder(r.Body).Decode(&received)
+			require.NoError(t, err)
+			require.Equal(t, requestBody, received)
+
+			w.Header().Set("Content-Type", "application/json")
+			err = json.NewEncoder(w).Encode(expected)
+			require.NoError(t, err)
+		}))
+		defer server.Close()
+
+		resp, err := httpx.PostJSON[testResponse](context.Background(), server.URL, requestBody)
+		require.NoError(t, err)
+		require.Equal(t, expected, resp)
+	})
+
+	t.Run("invalid URL", func(t *testing.T) {
+		_, err := httpx.PostJSON[testResponse](context.Background(), "http://invalid-url", nil)
+		require.Error(t, err)
+	})
+
+	t.Run("server error", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer server.Close()
+
+		_, err := httpx.PostJSON[testResponse](context.Background(), server.URL, nil)
+		require.Error(t, err)
+	})
+
+	t.Run("invalid JSON response", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(`{"invalid json`))
+		}))
+		defer server.Close()
+
+		_, err := httpx.PostJSON[testResponse](context.Background(), server.URL, nil)
+		require.Error(t, err)
+	})
+
+	t.Run("context cancellation", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			<-r.Context().Done()
+		}))
+		defer server.Close()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel() // Cancel immediately
+
+		_, err := httpx.PostJSON[testResponse](ctx, server.URL, nil)
+		require.ErrorIs(t, err, context.Canceled)
+	})
+}
