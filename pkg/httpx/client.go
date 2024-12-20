@@ -73,12 +73,21 @@ func Do(req *http.Request) (*http.Response, error) {
 
 // GetJSON makes a GET request and decodes the response as JSON
 func GetJSON[Resp any](ctx context.Context, url string) (resp Resp, err error) {
+	return getJSON[Resp](ctx, defaultClient, url)
+}
+
+// GetJSONWithClient makes a GET request and decodes the response as JSON
+func GetJSONWithClient[Resp any](ctx context.Context, client *Client, url string) (resp Resp, err error) {
+	return getJSON[Resp](ctx, client, url)
+}
+
+func getJSON[Resp any](ctx context.Context, client *Client, url string) (resp Resp, _ error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
 		return resp, errs.Wrap(err, "failed to create request")
 	}
 
-	httpResp, err := defaultClient.Do(req)
+	httpResp, err := client.Do(req)
 	if err != nil {
 		return resp, errs.Wrap(err, "failed to do request")
 	}
