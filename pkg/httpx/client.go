@@ -115,6 +115,8 @@ func postJSON[Resp any](ctx context.Context, client *Client, url string, body an
 		return resp, errs.Wrap(err, "failed to create request")
 	}
 
+	req.Header.Set("Content-Type", "application/json")
+
 	httpResp, err := client.Do(req)
 	if err != nil {
 		return resp, errs.Wrap(err, "failed to do request")
