@@ -15,8 +15,8 @@ import (
 const (
 	defaultTimeout               = 10 * time.Second
 	defaultKeepAlive             = 30 * time.Second
-	defaultMaxIdleConns          = 100
-	defaultMaxIdleConnsPerHost   = 100
+	defaultMaxIdleConns          = 10
+	defaultMaxIdleConnsPerHost   = 2
 	defaultIdleConnTimeout       = 90 * time.Second
 	defaultTLSHandshakeTimeout   = 10 * time.Second
 	defaultExpectContinueTimeout = 1 * time.Second
@@ -90,7 +90,12 @@ func getJSON[Resp any](ctx context.Context, client *Client, url string) (resp Re
 
 	httpResp, err := client.Do(req)
 	if err != nil {
-		return resp, errs.Wrap(err, "failed to do request")
+		err = errs.Wrap(err, "failed to do request")
+		if cerr := closeAndDrainResponse(httpResp); cerr != nil {
+			err = errs.Join(err, cerr)
+		}
+
+		return resp, err
 	}
 
 	return parseAndCloseResponse[Resp](httpResp)
@@ -119,33 +124,54 @@ func postJSON[Resp any](ctx context.Context, client *Client, url string, body an
 
 	httpResp, err := client.Do(req)
 	if err != nil {
-		return resp, errs.Wrap(err, "failed to do request")
+		err = errs.Wrap(err, "failed to do request")
+		if cerr := closeAndDrainResponse(httpResp); cerr != nil {
+			err = errs.Join(err, cerr)
+		}
+
+		return resp, err
 	}
 
 	return parseAndCloseResponse[Resp](httpResp)
 }
 
+// have to drain response body, otherwise the connection will not be reused
+func closeAndDrainResponse(resp *http.Response) error {
+	if resp == nil || resp.Body == nil {
+		return nil
+	}
+
+	_, err := io.Copy(io.Discard, resp.Body)
+	if err != nil {
+		return errs.Wrap(err, "failed to drain response body")
+	}
+
+	if err := resp.Body.Close(); err != nil {
+		return errs.Wrap(err, "failed to close response body")
+	}
+
+	return nil
+}
+
 func parseAndCloseResponse[Resp any](httpResp *http.Response) (resp Resp, err error) {
+	defer func() {
+		if cerr := closeAndDrainResponse(httpResp); cerr != nil {
+			err = errs.Join(err, cerr)
+		}
+	}()
+
 	if httpResp.StatusCode >= 400 {
 		body, err := io.ReadAll(httpResp.Body)
 		if err != nil {
 			return resp, errs.Wrapf(err, "request failed with status code %d", httpResp.StatusCode)
 		}
-		return resp, errs.Newf("request failed with status code %d: %s", httpResp.StatusCode, string(body))
+
+		return resp, errs.Errorf("request failed with status code %d: %s", httpResp.StatusCode, string(body))
 	}
 
 	err = json.NewDecoder(httpResp.Body).Decode(&resp)
 	if err != nil {
-		err = errs.Wrap(err, "failed to decode response")
-		if cerr := httpResp.Body.Close(); cerr != nil {
-			err = errs.Join(err, errs.Wrap(cerr, "failed to close response body"))
-		}
-		return resp, err
-	}
-
-	err = httpResp.Body.Close()
-	if err != nil {
-		return resp, errs.Wrap(err, "failed to close response body")
+		return resp, errs.Wrap(err, "failed to decode response")
 	}
 
 	return resp, nil

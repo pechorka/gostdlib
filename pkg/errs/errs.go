@@ -19,6 +19,11 @@ func Newf(text string, args ...any) error {
 	return fmt.Errorf(text, args...)
 }
 
+// Errorf is proxy for fmt.Errorf
+func Errorf(text string, args ...any) error {
+	return fmt.Errorf(text, args...)
+}
+
 // Wrap is wraping provided error with prefix using fmt.Errorf and %w
 func Wrap(err error, prefix string) error {
 	if err == nil {
