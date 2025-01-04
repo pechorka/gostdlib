@@ -72,6 +72,39 @@ func Do(req *http.Request) (*http.Response, error) {
 	return defaultClient.Do(req)
 }
 
+func DoJSONRequest[Resp any](ctx context.Context, method, url string, body any) (resp Resp, err error) {
+	return doJSONRequest[Resp](ctx, defaultClient, method, url, body)
+}
+
+func DoJSONRequestWithClient[Resp any](ctx context.Context, client *Client, method, url string, body any) (resp Resp, err error) {
+	return doJSONRequest[Resp](ctx, client, method, url, body)
+}
+
+func doJSONRequest[Resp any](ctx context.Context, client *Client, method, url string, body any) (resp Resp, _ error) {
+	var bodyReader io.Reader = http.NoBody
+	if body != nil {
+		encodedBody, err := json.Marshal(body)
+		if err != nil {
+			return resp, errs.Wrap(err, "failed to encode request body")
+		}
+		bodyReader = bytes.NewReader(encodedBody)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, url, bodyReader)
+	if err != nil {
+		return resp, errs.Wrap(err, "failed to create request")
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	httpResp, err := client.Do(req)
+	if err != nil {
+		return resp, errs.Wrap(err, "failed to do request")
+	}
+
+	return parseAndCloseResponse[Resp](httpResp)
+}
+
 // GetJSON makes a GET request and decodes the response as JSON
 func GetJSON[Resp any](ctx context.Context, url string) (resp Resp, err error) {
 	return getJSON[Resp](ctx, defaultClient, url)
