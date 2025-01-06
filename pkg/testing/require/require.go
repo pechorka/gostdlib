@@ -58,6 +58,13 @@ func Nil(t *testing.T, value any) {
 	}
 }
 
+func NotNil(t *testing.T, value any) {
+	t.Helper()
+	if value == nil {
+		t.Fatalf("\nExpected not nil, got: %v", value)
+	}
+}
+
 func True(t *testing.T, value bool) {
 	t.Helper()
 	if !value {
