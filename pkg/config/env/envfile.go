@@ -31,6 +31,7 @@ func exportDotEnv(file []byte) error {
 		if !ok {
 			return errs.Newf("invalid line: %s", line)
 		}
+		value = removeCommentsAndSpaces(value)
 		err := os.Setenv(stringx.FromBytes(name), stringx.FromBytes(value))
 		if err != nil {
 			return errs.Wrap(err, "failed to set environment variable")
@@ -38,4 +39,24 @@ func exportDotEnv(file []byte) error {
 	}
 
 	return nil
+}
+
+func removeCommentsAndSpaces(value []byte) []byte {
+	value = bytes.TrimSpace(value)
+	if len(value) == 0 {
+		return nil
+	}
+
+	if len(value) > 1 && value[0] == '\'' || value[0] == '"' {
+		quoteEnd := bytes.LastIndexByte(value, value[0])
+		if quoteEnd != -1 {
+			return value[1:quoteEnd]
+		}
+	}
+
+	i := bytes.IndexByte(value, '#')
+	if i != -1 {
+		return bytes.TrimRight(value[:i], " ")
+	}
+	return value
 }

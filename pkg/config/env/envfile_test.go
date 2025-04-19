@@ -67,4 +67,37 @@ BAZ=qux`)
 		// Cleanup
 		os.Unsetenv("URL")
 	})
+
+	t.Run("value can have comment afterwards", func(t *testing.T) {
+		input := []byte(`URL=http://example.com?foo=bar # prod`)
+		err := exportDotEnv(input)
+		require.NoError(t, err)
+
+		require.Equal(t, "http://example.com?foo=bar", os.Getenv("URL"))
+
+		// Cleanup
+		os.Unsetenv("URL")
+	})
+
+	t.Run("quoted value can have comment afterwards", func(t *testing.T) {
+		input := []byte(`KEY='val with quotes' # prod`)
+		err := exportDotEnv(input)
+		require.NoError(t, err)
+
+		require.Equal(t, "val with quotes", os.Getenv("KEY"))
+
+		// Cleanup
+		os.Unsetenv("KEY")
+	})
+
+	t.Run("value can have # in string", func(t *testing.T) {
+		input := []byte(`VAL='val with # and something'`)
+		err := exportDotEnv(input)
+		require.NoError(t, err)
+
+		require.Equal(t, "val with # and something", os.Getenv("VAL"))
+
+		// Cleanup
+		os.Unsetenv("VAL")
+	})
 }
