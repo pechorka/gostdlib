@@ -16,11 +16,11 @@ func NewEncrypter(key []byte) (*AesCryptor, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, errs.Wrap(err, "failed to create cipher")
-	}
+	}	
 
 	aesgcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return nil, errs.Wrap(err, "failed to create gcm")
+		return nil, err
 	}
 
 	return &AesCryptor{
